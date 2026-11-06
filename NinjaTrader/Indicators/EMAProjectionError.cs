@@ -46,6 +46,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 				//See Help Guide for additional information.
 				IsSuspendedWhileInactive					= true;
 				Period										= 14;
+				ProjectionMethod							= EMAProjectionMethod.PriceHold;
 				InverseGraph								= true;
 
 				AddPlot(new Stroke(Brushes.Green, 2), PlotStyle.Bar, "Positive Error");
@@ -53,7 +54,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 			}
 			else if (State == State.Configure)
 			{
-				emaProjection = EMAProjection(false, Period);
+				emaProjection = EMAProjection(false, Period, ProjectionMethod);
 			}
 		}
 
@@ -84,6 +85,11 @@ namespace NinjaTrader.NinjaScript.Indicators
 		public bool InverseGraph
 		{ get; set; }
 
+		[NinjaScriptProperty]
+		[Display(Name="Projection Method", Order=2, GroupName="Parameters")]
+		public EMAProjectionMethod ProjectionMethod
+		{ get; set; }
+
 		[Browsable(false)]
 		[XmlIgnore]
 		public Series<double> PositiveError
@@ -108,18 +114,18 @@ namespace NinjaTrader.NinjaScript.Indicators
 	public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
 	{
 		private EMAProjectionError[] cacheEMAProjectionError;
-		public EMAProjectionError EMAProjectionError(int period, bool inverseGraph)
+		public EMAProjectionError EMAProjectionError(int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return EMAProjectionError(Input, period, inverseGraph);
+			return EMAProjectionError(Input, period, inverseGraph, projectionMethod);
 		}
 
-		public EMAProjectionError EMAProjectionError(ISeries<double> input, int period, bool inverseGraph)
+		public EMAProjectionError EMAProjectionError(ISeries<double> input, int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
 			if (cacheEMAProjectionError != null)
 				for (int idx = 0; idx < cacheEMAProjectionError.Length; idx++)
-					if (cacheEMAProjectionError[idx] != null && cacheEMAProjectionError[idx].Period == period && cacheEMAProjectionError[idx].InverseGraph == inverseGraph && cacheEMAProjectionError[idx].EqualsInput(input))
+					if (cacheEMAProjectionError[idx] != null && cacheEMAProjectionError[idx].Period == period && cacheEMAProjectionError[idx].InverseGraph == inverseGraph && cacheEMAProjectionError[idx].ProjectionMethod == projectionMethod && cacheEMAProjectionError[idx].EqualsInput(input))
 						return cacheEMAProjectionError[idx];
-			return CacheIndicator<EMAProjectionError>(new EMAProjectionError(){ Period = period, InverseGraph = inverseGraph }, input, ref cacheEMAProjectionError);
+			return CacheIndicator<EMAProjectionError>(new EMAProjectionError(){ Period = period, InverseGraph = inverseGraph, ProjectionMethod = projectionMethod }, input, ref cacheEMAProjectionError);
 		}
 	}
 }
@@ -128,14 +134,14 @@ namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
 {
 	public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
 	{
-		public Indicators.EMAProjectionError EMAProjectionError(int period, bool inverseGraph)
+		public Indicators.EMAProjectionError EMAProjectionError(int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionError(Input, period, inverseGraph);
+			return indicator.EMAProjectionError(Input, period, inverseGraph, projectionMethod);
 		}
 
-		public Indicators.EMAProjectionError EMAProjectionError(ISeries<double> input , int period, bool inverseGraph)
+		public Indicators.EMAProjectionError EMAProjectionError(ISeries<double> input , int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionError(input, period, inverseGraph);
+			return indicator.EMAProjectionError(input, period, inverseGraph, projectionMethod);
 		}
 	}
 }
@@ -144,14 +150,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 {
 	public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
 	{
-		public Indicators.EMAProjectionError EMAProjectionError(int period, bool inverseGraph)
+		public Indicators.EMAProjectionError EMAProjectionError(int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionError(Input, period, inverseGraph);
+			return indicator.EMAProjectionError(Input, period, inverseGraph, projectionMethod);
 		}
 
-		public Indicators.EMAProjectionError EMAProjectionError(ISeries<double> input , int period, bool inverseGraph)
+		public Indicators.EMAProjectionError EMAProjectionError(ISeries<double> input , int period, bool inverseGraph, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionError(input, period, inverseGraph);
+			return indicator.EMAProjectionError(input, period, inverseGraph, projectionMethod);
 		}
 	}
 }

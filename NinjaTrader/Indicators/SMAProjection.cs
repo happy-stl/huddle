@@ -55,15 +55,16 @@ namespace NinjaTrader.NinjaScript.Indicators
 			SMA[0] = sma0;
 			
 			// Since we are looking at our past SMA, we need at least N+1 periods so we have enough
-			// data to look over sma[1] to sma[N].
+			// data to look over sma[1] to sma[N+1].
 			if (CurrentBar < Period + 1) {
 				return;
 			}
 			
 			double sma1 = sma[1];
 			double smaX = sma[Period + 1];
+			// sma[1] back to sma[Period + 1] spans Period bars.
 			double dx = sma1 - smaX;
-			int dy = Period - 1;
+			int dy = Period;
 			double slope = dx / dy;
 			Projection[0] = sma1 + slope;
 			
