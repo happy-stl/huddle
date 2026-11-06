@@ -101,3 +101,25 @@ and MSE of every model and baseline.
 
 Only if both criteria pass is a NinjaTrader indicator built from the model, together with a chart for
 the website. A failure is reported as a failure.
+
+## Results
+
+Run after the criteria above were committed. Tables are in [RESULTS.md](RESULTS.md).
+
+- **Criterion 1 (volatility forecast): PASS**, 5 of 6. GARCH(1,1) beat the best baseline on ES=F 1h and daily and
+  on SPY 30m, 1h and daily, but the difference is significant only on the daily series.
+- **Criterion 2 (range bands): FAIL.** At 80% the volatility band was wider than the fixed band on all 6
+  series; at 95% it was narrower at no worse coverage on 3. Coverage was within 2.5 points of nominal on 4 of
+  6 at each level.
+
+So no NinjaTrader indicator was built.
+
+## Running It
+
+Python 3.9 or later, standard library only.
+
+```sh
+python3 ../ema-projection/fetch.py   # the data; check the SHA-256 values above match
+python3 backtest.py                  # writes RESULTS.md (a few seconds)
+python3 -m unittest test_vol         # no-lookahead and formula checks
+```
