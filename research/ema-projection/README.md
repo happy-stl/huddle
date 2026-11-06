@@ -17,6 +17,9 @@ python3 -m unittest test_projection    # the hand-computed checks below
 [nt8-sim](nt8-sim/README.md) compiles the C# indicators against a small NinjaTrader 8 simulation
 and checks that they plot exactly what `projection.py` computes, bar by bar.
 
+[ema-crossover](../ema-crossover/README.md) tests whether trading crossovers a bar early on the
+projection pays; it does not.
+
 `fetch.py` downloads ES=F (E-mini S&P 500 continuous futures) and SPY from Yahoo Finance's
 public chart API: 30-minute bars (Yahoo keeps about 60 days), 1-hour bars (about 730 days)
 and daily bars (ES=F from 2000, SPY from 1993). SPY is the out-of-sample instrument: every
