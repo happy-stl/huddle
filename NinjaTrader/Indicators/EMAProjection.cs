@@ -24,6 +24,15 @@ using NinjaTrader.NinjaScript.DrawingTools;
 //This namespace holds Indicators in this folder and is required. Do not change it. 
 namespace NinjaTrader.NinjaScript.Indicators
 {
+	// How EMAProjection estimates the EMA's change over the next bar.
+	public enum EMAProjectionMethod
+	{
+		// The EMA the next bar gives if it closes where the last bar closed.
+		PriceHold,
+		// The EMA's average change per bar over the last Period bars.
+		AverageSlope
+	}
+
 	public class EMAProjection : Indicator
 	{
 		private EMA ema;
@@ -32,7 +41,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 		{
 			if (State == State.SetDefaults)
 			{
-				Description									= @"Computes the EMA with an additional factor of prediction based on the slope of the T-1 and T-2 prices.";
+				Description									= @"Computes the EMA and projects it one bar ahead from the EMA's recent slope.";
 				Name										= "EMA Projection";
 				Calculate									= Calculate.OnPriceChange;
 				IsOverlay									= false;
@@ -47,6 +56,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 				IsSuspendedWhileInactive					= true;
 				Period										= 14;
 				PrintOutput									= false;
+				ProjectionMethod							= EMAProjectionMethod.PriceHold;
 
 				AddPlot(Brushes.Goldenrod, "EMA");
 				AddPlot(Brushes.Aquamarine, "Projection");
@@ -62,17 +72,25 @@ namespace NinjaTrader.NinjaScript.Indicators
 			double ema0 = ema[0];
 			EMA[0] = ema0;
 			
-			// Since we are looking at our past EMA, we need at least N+1 periods so we have enough
-			// data to look over ema[1] to ema[N].
-			if (CurrentBar < Period + 1) {
+			// The projection for this bar only uses closed bars: ema[1] back to ema[lookback].
+			int lookback = ProjectionMethod == EMAProjectionMethod.AverageSlope ? Period + 1 : 2;
+			if (CurrentBar < lookback) {
 				return;
 			}
 			
 			double ema1 = ema[1];
-			double emaX = ema[Period + 1];
-			double dx = ema1 - emaX;
-			int dy = Period - 1;
-			double slope = dx / dy;
+			double slope;
+			if (ProjectionMethod == EMAProjectionMethod.AverageSlope) {
+				// ema[1] back to ema[Period + 1] spans Period bars.
+				double emaX = ema[Period + 1];
+				slope = (ema1 - emaX) / Period;
+			} else {
+				// PriceHold: if this bar closes where the last one did, the EMA moves by
+				// k * (Input[1] - ema1), which by the EMA's recursion is (1 - k) * (ema1 - ema2).
+				double k = 2.0 / (1 + Period);
+				double ema2 = ema[2];
+				slope = (1 - k) * (ema1 - ema2);
+			}
 			Projection[0] = ema1 + slope;
 			
 			#region Debugging
@@ -80,13 +98,13 @@ namespace NinjaTrader.NinjaScript.Indicators
 				Print(string.Format(
 					"{{" +
 						"\"CurrentBar\": {0}, " +
-						"\"ema{1}\": {2:0.00}, " +
-						"\"ema1\": {3:0.00}, " +
-						"\"period\": {4}, " +
-						"\"slope\": {5:0.00}, " +
-						"\"projection\": {6:0.00}" +
+						"\"method\": \"{1}\", " +
+						"\"ema1\": {2:0.00}, " +
+						"\"period\": {3}, " +
+						"\"slope\": {4:0.00}, " +
+						"\"projection\": {5:0.00}" +
 					"}}",
-					CurrentBar, Period + 1, emaX, ema1, Period, slope, Projection[0]
+					CurrentBar, ProjectionMethod, ema1, Period, slope, Projection[0]
 				));
 			}
 			#endregion
@@ -100,6 +118,10 @@ namespace NinjaTrader.NinjaScript.Indicators
 		[Range(1, int.MaxValue), NinjaScriptProperty]
 		[Display(ResourceType = typeof(Custom.Resource), Name = "Period", GroupName = "NinjaScriptParameters", Order = 0)]
 		public int Period { get; set; }
+		
+		[NinjaScriptProperty]
+		[Display(ResourceType = typeof(Custom.Resource), Name = "Projection Method", GroupName = "NinjaScriptParameters", Order = 1)]
+		public EMAProjectionMethod ProjectionMethod { get; set; }
 		
 		[Browsable(false)]
 		[XmlIgnore()]
@@ -125,18 +147,18 @@ namespace NinjaTrader.NinjaScript.Indicators
 	public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
 	{
 		private EMAProjection[] cacheEMAProjection;
-		public EMAProjection EMAProjection(bool printOutput, int period)
+		public EMAProjection EMAProjection(bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return EMAProjection(Input, printOutput, period);
+			return EMAProjection(Input, printOutput, period, projectionMethod);
 		}
 
-		public EMAProjection EMAProjection(ISeries<double> input, bool printOutput, int period)
+		public EMAProjection EMAProjection(ISeries<double> input, bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
 			if (cacheEMAProjection != null)
 				for (int idx = 0; idx < cacheEMAProjection.Length; idx++)
-					if (cacheEMAProjection[idx] != null && cacheEMAProjection[idx].PrintOutput == printOutput && cacheEMAProjection[idx].Period == period && cacheEMAProjection[idx].EqualsInput(input))
+					if (cacheEMAProjection[idx] != null && cacheEMAProjection[idx].PrintOutput == printOutput && cacheEMAProjection[idx].Period == period && cacheEMAProjection[idx].ProjectionMethod == projectionMethod && cacheEMAProjection[idx].EqualsInput(input))
 						return cacheEMAProjection[idx];
-			return CacheIndicator<EMAProjection>(new EMAProjection(){ PrintOutput = printOutput, Period = period }, input, ref cacheEMAProjection);
+			return CacheIndicator<EMAProjection>(new EMAProjection(){ PrintOutput = printOutput, Period = period, ProjectionMethod = projectionMethod }, input, ref cacheEMAProjection);
 		}
 	}
 }
@@ -145,14 +167,14 @@ namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
 {
 	public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
 	{
-		public Indicators.EMAProjection EMAProjection(bool printOutput, int period)
+		public Indicators.EMAProjection EMAProjection(bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjection(Input, printOutput, period);
+			return indicator.EMAProjection(Input, printOutput, period, projectionMethod);
 		}
 
-		public Indicators.EMAProjection EMAProjection(ISeries<double> input , bool printOutput, int period)
+		public Indicators.EMAProjection EMAProjection(ISeries<double> input , bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjection(input, printOutput, period);
+			return indicator.EMAProjection(input, printOutput, period, projectionMethod);
 		}
 	}
 }
@@ -161,14 +183,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 {
 	public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
 	{
-		public Indicators.EMAProjection EMAProjection(bool printOutput, int period)
+		public Indicators.EMAProjection EMAProjection(bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjection(Input, printOutput, period);
+			return indicator.EMAProjection(Input, printOutput, period, projectionMethod);
 		}
 
-		public Indicators.EMAProjection EMAProjection(ISeries<double> input , bool printOutput, int period)
+		public Indicators.EMAProjection EMAProjection(ISeries<double> input , bool printOutput, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjection(input, printOutput, period);
+			return indicator.EMAProjection(input, printOutput, period, projectionMethod);
 		}
 	}
 }

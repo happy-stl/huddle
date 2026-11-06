@@ -32,7 +32,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 		{
 			if (State == State.SetDefaults)
 			{
-				Description									= @"Enter the description for your new custom Indicator here.";
+				Description									= @"Shows how much the EMA projection rose or fell since the last bar.";
 				Name										= "EMA Projection Trend";
 				Calculate									= Calculate.OnPriceChange;
 				IsOverlay									= false;
@@ -46,6 +46,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 				//See Help Guide for additional information.
 				IsSuspendedWhileInactive					= true;
 				Period										= 14;
+				ProjectionMethod							= EMAProjectionMethod.PriceHold;
 
 				AddPlot(new Stroke(Brushes.Green, 2), PlotStyle.Bar, "Trend Up");
 				AddPlot(new Stroke(Brushes.Red, 2), PlotStyle.Bar, "Trend Down");
@@ -54,7 +55,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 			}
 			else if (State == State.DataLoaded)
 			{				
-				emaProjection = EMAProjection(false, Period);
+				emaProjection = EMAProjection(false, Period, ProjectionMethod);
 			}
 		}
 
@@ -74,6 +75,11 @@ namespace NinjaTrader.NinjaScript.Indicators
 		[Range(1, int.MaxValue)]
 		[Display(Name="Period", Order=2, GroupName="Parameters")]
 		public int Period
+		{ get; set; }
+
+		[NinjaScriptProperty]
+		[Display(Name="Projection Method", Order=3, GroupName="Parameters")]
+		public EMAProjectionMethod ProjectionMethod
 		{ get; set; }
 
 		[Browsable(false)]
@@ -100,18 +106,18 @@ namespace NinjaTrader.NinjaScript.Indicators
 	public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
 	{
 		private EMAProjectionTrend[] cacheEMAProjectionTrend;
-		public EMAProjectionTrend EMAProjectionTrend(int period)
+		public EMAProjectionTrend EMAProjectionTrend(int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return EMAProjectionTrend(Input, period);
+			return EMAProjectionTrend(Input, period, projectionMethod);
 		}
 
-		public EMAProjectionTrend EMAProjectionTrend(ISeries<double> input, int period)
+		public EMAProjectionTrend EMAProjectionTrend(ISeries<double> input, int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
 			if (cacheEMAProjectionTrend != null)
 				for (int idx = 0; idx < cacheEMAProjectionTrend.Length; idx++)
-					if (cacheEMAProjectionTrend[idx] != null && cacheEMAProjectionTrend[idx].Period == period && cacheEMAProjectionTrend[idx].EqualsInput(input))
+					if (cacheEMAProjectionTrend[idx] != null && cacheEMAProjectionTrend[idx].Period == period && cacheEMAProjectionTrend[idx].ProjectionMethod == projectionMethod && cacheEMAProjectionTrend[idx].EqualsInput(input))
 						return cacheEMAProjectionTrend[idx];
-			return CacheIndicator<EMAProjectionTrend>(new EMAProjectionTrend(){ Period = period }, input, ref cacheEMAProjectionTrend);
+			return CacheIndicator<EMAProjectionTrend>(new EMAProjectionTrend(){ Period = period, ProjectionMethod = projectionMethod }, input, ref cacheEMAProjectionTrend);
 		}
 	}
 }
@@ -120,14 +126,14 @@ namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
 {
 	public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
 	{
-		public Indicators.EMAProjectionTrend EMAProjectionTrend(int period)
+		public Indicators.EMAProjectionTrend EMAProjectionTrend(int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionTrend(Input, period);
+			return indicator.EMAProjectionTrend(Input, period, projectionMethod);
 		}
 
-		public Indicators.EMAProjectionTrend EMAProjectionTrend(ISeries<double> input , int period)
+		public Indicators.EMAProjectionTrend EMAProjectionTrend(ISeries<double> input , int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionTrend(input, period);
+			return indicator.EMAProjectionTrend(input, period, projectionMethod);
 		}
 	}
 }
@@ -136,14 +142,14 @@ namespace NinjaTrader.NinjaScript.Strategies
 {
 	public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
 	{
-		public Indicators.EMAProjectionTrend EMAProjectionTrend(int period)
+		public Indicators.EMAProjectionTrend EMAProjectionTrend(int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionTrend(Input, period);
+			return indicator.EMAProjectionTrend(Input, period, projectionMethod);
 		}
 
-		public Indicators.EMAProjectionTrend EMAProjectionTrend(ISeries<double> input , int period)
+		public Indicators.EMAProjectionTrend EMAProjectionTrend(ISeries<double> input , int period, NinjaTrader.NinjaScript.Indicators.EMAProjectionMethod projectionMethod)
 		{
-			return indicator.EMAProjectionTrend(input, period);
+			return indicator.EMAProjectionTrend(input, period, projectionMethod);
 		}
 	}
 }
