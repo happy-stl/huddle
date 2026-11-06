@@ -61,10 +61,11 @@ namespace NinjaTrader.NinjaScript.Indicators
 
 		protected override void OnBarUpdate()
 		{
-			if (CurrentBar == 0) {
+			Series<double> projection = emaProjection.Projection;
+			// The projection starts after its warm-up bars; a trend needs it on this bar and the last.
+			if (CurrentBar == 0 || !projection.IsValidDataPoint(0) || !projection.IsValidDataPoint(1)) {
 				return;
 			}
-			Series<double> projection = emaProjection.Projection;
 			double trend = projection[0] - projection[1];
 			TrendUp[0] = trend > 0 ? trend : 0;
 			TrendDown[0] = trend < 0 ? trend : 0;

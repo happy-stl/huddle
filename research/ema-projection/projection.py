@@ -116,3 +116,24 @@ def holt_price(closes, period, alpha, beta):
         level = alpha * x + (1 - alpha) * (level + trend)
         trend = beta * (level - prev) + (1 - beta) * trend
     return p
+
+
+def sma(closes, period):
+    """NinjaTrader 8's SMA on time bars: a running sum, averaging the bars so far until there are Period."""
+    out = []
+    total = 0.0
+    for t, x in enumerate(closes):
+        total = total + x - (closes[t - period] if t >= period else 0)
+        out.append(total / (t + 1 if t < period else period))
+    return out
+
+
+def sma_projection(closes, period):
+    """SMAProjection: sma1 plus the SMA's average change per bar over the last Period bars."""
+    s = sma(closes, period)
+    p = [None] * len(s)
+    for t in range(period + 1, len(s)):
+        sma1 = back(s, t, 1)
+        smaX = back(s, t, period + 1)
+        p[t] = sma1 + (sma1 - smaX) / period
+    return p

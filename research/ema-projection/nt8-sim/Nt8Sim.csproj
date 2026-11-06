@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The indicators in NinjaTrader/Indicators, compiled unmodified against the stubs in Stubs/. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Nt8Sim</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- CS0108: EMAProjection's EMA plot hides the inherited EMA() method, as it does in NinjaTrader. -->
+    <NoWarn>CS0108</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../NinjaTrader/Indicators/*.cs" Link="Indicators/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

@@ -32,10 +32,15 @@ and full results are in [research/ema-projection](../research/ema-projection/REA
 
 `EMAProjectionTrend` plots how much the projection rose or fell since the last bar, and
 `EMAProjectionError` the difference between the projection and the EMA it was projecting. Both
-take the same `Period` and `Projection Method`.
+take the same `Period` and `Projection Method`, and plot nothing until the projection has values
+for the bars they read.
 
 ### SMA Projection
 
 `SMAProjection` plots the SMA of `Period` bars and `sma[1] + (sma[1] - sma[Period + 1]) / Period`,
 the SMA's average change per bar over the last `Period` bars added to its last value.
 `SMAProjectionTrend` plots how much that projection rose or fell since the last bar.
+
+The C# is checked without NinjaTrader by [research/ema-projection/nt8-sim](../research/ema-projection/nt8-sim/README.md),
+which compiles these indicators against a small NinjaTrader 8 simulation and compares every plotted
+value with the backtest's Python port.

@@ -60,10 +60,11 @@ namespace NinjaTrader.NinjaScript.Indicators
 
 		protected override void OnBarUpdate()
 		{
-			if (CurrentBar == 0) {
+			Series<double> projection = emaProjection.Projection;
+			// The projection starts after its warm-up bars.
+			if (!projection.IsValidDataPoint(0)) {
 				return;
 			}
-			Series<double> projection = emaProjection.Projection;
 			Series<double> ema = emaProjection.EMA;
 			double error = (projection[0] - ema[0]) * (InverseGraph ? -1 : 1);
 			if (error >= 0.0) {
