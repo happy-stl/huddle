@@ -214,8 +214,8 @@ What the numbers say:
   is narrow, and scaling by a forecast does not beat it. At 95% the volatility band was narrower at no worse
   coverage on 3 series (ES=F daily, SPY 1h and daily), short of the 5 needed. Coverage was within 2.5 points
   of nominal on 4 series at each level; the two 30-minute series, whose held-out stretches were more volatile
-  than their training, under-covered. Where the volatility band does work it removes the clustering of misses
-  that the fixed band shows (Christoffersen p near 0 for most fixed bands).
+  than their training, under-covered. The volatility band does spread its misses out: the fixed band's misses
+  cluster on almost every series (Christoffersen p near 0), the volatility band's only on ES=F 1h.
 - **The time-of-day profile is fragile.** On ES=F a 16:00 Chicago bar (the settlement bar inside the daily
   halt) appeared twice in training with almost no movement, so its profile weight was near 0. One such bar in
   the held-out part (2026-10-23) moved normally, and its QLIKE term was about 1,100, which alone lifted the
